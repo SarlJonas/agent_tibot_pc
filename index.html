@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIBOT - Agent de Maintenance Informatique IA | Jonas Browser</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #0f0f23 100%);
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, rgba(0, 200, 100, 0.2), rgba(0, 100, 200, 0.2));
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid rgba(0, 255, 150, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 150, 0.2), transparent);
+            animation: scanHeader 3s infinite;
+        }
+        
+        @keyframes scanHeader {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+        
+        .logo-tibot {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ff96, #00cc77, #00ff96);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            animation: pulse 2s infinite;
+            text-shadow: 0 0 30px rgba(0, 255, 150, 0.5);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .tagline {
+            font-size: 1.5rem;
+            color: rgba(0, 255, 150, 0.9);
+            letter-spacing: 3px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Terminal Window */
+        .terminal {
+            background: rgba(10, 20, 30, 0.9);
+            border: 2px solid rgba(0, 255, 150, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 255, 150, 0.2);
+        }
+        
+        .terminal-header {
+            background: linear-gradient(135deg, rgba(0, 200, 100, 0.3), rgba(0, 100, 150, 0.3));
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+        
+        .terminal-title {
+            margin-left: auto;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            color: rgba(0, 255, 150, 0.9);
+        }
+        
+        .terminal-body {
+            padding: 1.5rem;
+            min-height: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .terminal-body::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .terminal-body::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 150, 0.3);
+            border-radius: 4px;
+        }
+        
+        .log-line {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        .log-success { color: #00ff96; }
+        .log-warning { color: #ffaa00; }
+        .log-error { color: #ff4444; }
+        .log-info { color: #00ccff; }
+        .log-system { color: rgba(255, 255, 255, 0.7); }
+        
+        .log-timestamp {
+            color: rgba(255, 255, 255, 0.4);
+            margin-right: 0.5rem;
+        }
+        
+        /* System Status Panel */
+        .status-panel {
+            background: rgba(10, 20, 30, 0.9);
+            border: 2px solid rgba(0, 255, 150, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 255, 150, 0.2);
+        }
+        
+        .status-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: #00ff96;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .status-icon {
+            font-size: 2rem;
+            animation: rotate 4s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .metric {
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-label {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-bar {
+            background: rgba(0, 0, 0, 0.5);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff96, #00cc77);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: width 1s ease;
+            position: relative;
+        }
+        
+        .metric-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+        
+        .metric-fill.warning {
+            background: linear-gradient(90deg, #ffaa00, #ff8800);
+        }
+        
+        .metric-fill.danger {
+            background: linear-gradient(90deg, #ff4444, #cc0000);
+        }
+        
+        /* Issues List */
+        .issues-list {
+            margin-top: 2rem;
+        }
+        
+        .issue-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid #00ff96;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .issue-item:hover {
+            background: rgba(0, 255, 150, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .issue-item.warning {
+            border-left-color: #ffaa00;
+        }
+        
+        .issue-item.error {
+            border-left-color: #ff4444;
+        }
+        
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .issue-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .issue-severity {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .severity-low {
+            background: rgba(0, 255, 150, 0.2);
+            color: #00ff96;
+        }
+        
+        .severity-medium {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+        }
+        
+        .severity-high {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+        
+        .issue-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        /* Control Panel */
+        .control-panel {
+            background: rgba(10, 20, 30, 0.9);
+            border: 2px solid rgba(0, 255, 150, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 255, 150, 0.2);
+        }
+        
+        .control-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: #00ff96;
+            margin-bottom: 1.5rem;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.2), rgba(0, 200, 100, 0.2));
+            border: 2px solid rgba(0, 255, 150, 0.5);
+            padding: 1.5rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .action-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.3), rgba(0, 200, 100, 0.3));
+            border-color: #00ff96;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 255, 150, 0.3);
+        }
+        
+        .action-btn:active {
+            transform: translateY(0);
+        }
+        
+        .action-btn .icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* System Info */
+        .system-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .info-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 150, 0.2);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .info-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #00ff96;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 1px solid rgba(0, 255, 150, 0.2);
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .footer strong {
+            color: #00ff96;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .system-info {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border: 2px solid rgba(0, 255, 150, 0.3);
+            border-top-color: #00ff96;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-tibot">🤖 TIBOT</div>
+        <div class="tagline">Agent de Maintenance Informatique IA</div>
+        <div class="subtitle">Surveillance intelligente • Diagnostic automatique • Résolution proactive</div>
+    </div>
+    
+    <div class="container">
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <!-- Terminal de diagnostic -->
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot dot-red"></div>
+                    <div class="terminal-dot dot-yellow"></div>
+                    <div class="terminal-dot dot-green"></div>
+                    <div class="terminal-title">TIBOT Diagnostic Console v2.1.0</div>
+                </div>
+                <div class="terminal-body" id="terminalLog">
+                    <!-- Les logs seront ajoutés ici dynamiquement -->
+                </div>
+            </div>
+            
+            <!-- Panel de statut système -->
+            <div class="status-panel">
+                <div class="status-title">
+                    <span class="status-icon">⚙️</span>
+                    État du Système
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-label">💻 CPU Usage</div>
+                    <div class="metric-bar">
+                        <div class="metric-fill" id="cpuBar" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-label">🧠 RAM Usage</div>
+                    <div class="metric-bar">
+                        <div class="metric-fill" id="ramBar" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-label">💾 Disk Usage</div>
+                    <div class="metric-bar">
+                        <div class="metric-fill" id="diskBar" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-label">🌡️ Temperature</div>
+                    <div class="metric-bar">
+                        <div class="metric-fill" id="tempBar" style="width: 0%">0°C</div>
+                    </div>
+                </div>
+                
+                <div class="issues-list" id="issuesList">
+                    <!-- Les problèmes seront ajoutés ici -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-title">🎛️ Panneau de Contrôle</div>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="runFullDiagnostic()">
+                    <span class="icon">🔍</span>
+                    Diagnostic Complet
+                </button>
+                <button class="action-btn" onclick="optimizeSystem()">
+                    <span class="icon">⚡</span>
+                    Optimiser Système
+                </button>
+                <button class="action-btn" onclick="cleanTemp()">
+                    <span class="icon">🧹</span>
+                    Nettoyer Fichiers Temp
+                </button>
+                <button class="action-btn" onclick="checkUpdates()">
+                    <span class="icon">🔄</span>
+                    Vérifier MAJ
+                </button>
+                <button class="action-btn" onclick="securityScan()">
+                    <span class="icon">🛡️</span>
+                    Scan Sécurité
+                </button>
+                <button class="action-btn" onclick="networkTest()">
+                    <span class="icon">📡</span>
+                    Test Réseau
+                </button>
+            </div>
+            
+            <div class="system-info">
+                <div class="info-card">
+                    <div class="info-value" id="uptime">0d 0h</div>
+                    <div class="info-label">Uptime</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-value" id="issues">0</div>
+                    <div class="info-label">Problèmes détectés</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-value" id="resolved">0</div>
+                    <div class="info-label">Problèmes résolus</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <strong>SARL Jonas Browser High-Tech</strong><br>
+        Experts en Intelligence Artificielle & Maintenance Informatique<br>
+        📍 108 bd Robert Schuman, 44300 Nantes | 📧 tibot@jonas-browser.com | 📱 06 52 57 37 79
+    </div>
+    
+    <script>
+        // Variables globales
+        let logCount = 0;
+        let issuesDetected = 0;
+        let issuesResolved = 0;
+        
+        // Fonction pour ajouter un log
+        function addLog(message, type = 'system') {
+            const terminal = document.getElementById('terminalLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logLine = document.createElement('div');
+            logLine.className = `log-line log-${type}`;
+            logLine.innerHTML = `<span class="log-timestamp">[${timestamp}]</span>${message}`;
+            terminal.appendChild(logLine);
+            terminal.scrollTop = terminal.scrollHeight;
+            logCount++;
+        }
+        
+        // Fonction pour mettre à jour une métrique
+        function updateMetric(id, value, max = 100) {
+            const bar = document.getElementById(id);
+            const percentage = (value / max) * 100;
+            bar.style.width = percentage + '%';
+            
+            if (id === 'tempBar') {
+                bar.textContent = value + '°C';
+            } else {
+                bar.textContent = Math.round(percentage) + '%';
+            }
+            
+            // Changer la couleur selon le niveau
+            bar.className = 'metric-fill';
+            if (percentage > 80) {
+                bar.classList.add('danger');
+            } else if (percentage > 60) {
+                bar.classList.add('warning');
+            }
+        }
+        
+        // Fonction pour ajouter un problème
+        function addIssue(title, description, severity) {
+            const issuesList = document.getElementById('issuesList');
+            const issue = document.createElement('div');
+            issue.className = `issue-item ${severity === 'high' ? 'error' : severity === 'medium' ? 'warning' : ''}`;
+            issue.innerHTML = `
+                <div class="issue-header">
+                    <div class="issue-title">${title}</div>
+                    <div class="issue-severity severity-${severity}">${severity.toUpperCase()}</div>
+                </div>
+                <div class="issue-description">${description}</div>
+            `;
+            issuesList.appendChild(issue);
+            issuesDetected++;
+            document.getElementById('issues').textContent = issuesDetected;
+        }
+        
+        // Diagnostic complet
+        async function runFullDiagnostic() {
+            addLog('🚀 Démarrage du diagnostic complet système...', 'info');
+            await sleep(500);
+            
+            addLog('🔍 Analyse du processeur...', 'info');
+            await sleep(800);
+            updateMetric('cpuBar', 45);
+            addLog('✓ CPU: Intel Core i7-11800H @ 2.30GHz - État: Normal', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Analyse de la mémoire RAM...', 'info');
+            await sleep(800);
+            updateMetric('ramBar', 68);
+            addLog('⚠ RAM: 10.8 GB utilisés sur 16 GB (68%) - Usage élevé détecté', 'warning');
+            addIssue('Usage RAM élevé', 'Chrome utilise 4.2 GB de RAM. Fermez les onglets inutiles ou ajoutez de la RAM.', 'medium');
+            
+            await sleep(500);
+            addLog('🔍 Analyse du disque dur...', 'info');
+            await sleep(800);
+            updateMetric('diskBar', 78);
+            addLog('⚠ Disque: 780 GB utilisés sur 1 TB (78%) - Nettoyage recommandé', 'warning');
+            addIssue('Espace disque faible', '220 GB restants. Supprimez les fichiers temporaires et anciens programmes.', 'medium');
+            
+            await sleep(500);
+            addLog('🔍 Analyse de la température...', 'info');
+            await sleep(800);
+            updateMetric('tempBar', 68, 100);
+            addLog('✓ Température CPU: 68°C - Dans les limites normales', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Vérification des services Windows...', 'info');
+            await sleep(1000);
+            addLog('⚠ Service "Windows Update" est arrêté', 'warning');
+            addIssue('Service Windows arrêté', 'Le service Windows Update n\'est pas actif. Mises à jour désactivées.', 'high');
+            
+            await sleep(500);
+            addLog('🔍 Analyse des programmes au démarrage...', 'info');
+            await sleep(800);
+            addLog('⚠ 12 programmes démarrent automatiquement (ralentissement détecté)', 'warning');
+            addIssue('Trop de programmes au démarrage', '12 applications se lancent au démarrage. Désactivez les non-essentielles.', 'medium');
+            
+            await sleep(500);
+            addLog('🔍 Vérification des mises à jour...', 'info');
+            await sleep(1000);
+            addLog('✓ Windows 11 - Dernière MAJ: 15/12/2024', 'success');
+            addLog('⚠ 3 pilotes nécessitent une mise à jour', 'warning');
+            addIssue('Pilotes obsolètes', 'Pilotes graphiques NVIDIA (3 mois), Chipset (2 mois), Audio Realtek (1 mois)', 'low');
+            
+            await sleep(500);
+            addLog('═══════════════════════════════════════', 'system');
+            addLog('📊 RÉSUMÉ DU DIAGNOSTIC', 'info');
+            addLog('✓ Processeur: Normal (45% usage)', 'success');
+            addLog('⚠ RAM: Élevé (68% usage)', 'warning');
+            addLog('⚠ Disque: Attention (78% plein)', 'warning');
+            addLog('✓ Température: Normal (68°C)', 'success');
+            addLog(`⚠ ${issuesDetected} problèmes détectés`, 'warning');
+            addLog('═══════════════════════════════════════', 'system');
+            addLog('🎯 Recommandations TIBOT:', 'info');
+            addLog('1. Fermer les applications Chrome inutilisées', 'system');
+            addLog('2. Nettoyer les fichiers temporaires (45 GB disponibles)', 'system');
+            addLog('3. Mettre à jour les pilotes obsolètes', 'system');
+            addLog('4. Réduire les programmes au démarrage', 'system');
+            addLog('✅ Diagnostic complet terminé !', 'success');
+        }
+        
+        // Optimiser le système
+        async function optimizeSystem() {
+            addLog('⚡ Démarrage de l\'optimisation système...', 'info');
+            await sleep(500);
+            
+            addLog('🔧 Arrêt des processus inutiles...', 'info');
+            await sleep(1200);
+            addLog('✓ 15 processus en arrière-plan fermés', 'success');
+            updateMetric('ramBar', 52);
+            
+            await sleep(500);
+            addLog('🔧 Optimisation des services Windows...', 'info');
+            await sleep(1000);
+            addLog('✓ Services optimisés: Superfetch, Windows Search, SysMain', 'success');
+            
+            await sleep(500);
+            addLog('🔧 Défragmentation des fichiers système...', 'info');
+            await sleep(1500);
+            addLog('✓ 3.2 GB d\'espace fragmenté défragmenté', 'success');
+            
+            await sleep(500);
+            addLog('🔧 Nettoyage du cache DNS...', 'info');
+            await sleep(800);
+            addLog('✓ Cache DNS vidé - 124 entrées supprimées', 'success');
+            
+            await sleep(500);
+            addLog('🔧 Optimisation du registre Windows...', 'info');
+            await sleep(1000);
+            addLog('✓ 47 entrées invalides corrigées', 'success');
+            
+            updateMetric('cpuBar', 32);
+            issuesResolved += 2;
+            document.getElementById('resolved').textContent = issuesResolved;
+            
+            addLog('✅ Optimisation terminée ! Système 25% plus rapide', 'success');
+        }
+        
+        // Nettoyer fichiers temporaires
+        async function cleanTemp() {
+            addLog('🧹 Démarrage du nettoyage des fichiers temporaires...', 'info');
+            await sleep(500);
+            
+            addLog('🔍 Analyse des fichiers temporaires...', 'info');
+            await sleep(1000);
+            addLog('📁 Dossier Temp: 12.4 GB', 'system');
+            addLog('📁 Cache navigateur: 8.2 GB', 'system');
+            addLog('📁 Corbeille: 3.1 GB', 'system');
+            addLog('📁 Fichiers de logs: 2.8 GB', 'system');
+            addLog('📊 Total: 26.5 GB à nettoyer', 'warning');
+            
+            await sleep(800);
+            addLog('🗑️ Suppression des fichiers temporaires...', 'info');
+            await sleep(2000);
+            addLog('✓ 12.4 GB supprimés (dossier Temp)', 'success');
+            
+            await sleep(500);
+            addLog('🗑️ Vidage du cache navigateur...', 'info');
+            await sleep(1500);
+            addLog('✓ 8.2 GB supprimés (cache Chrome, Firefox, Edge)', 'success');
+            
+            await sleep(500);
+            addLog('🗑️ Vidage de la corbeille...', 'info');
+            await sleep(800);
+            addLog('✓ 3.1 GB supprimés (corbeille)', 'success');
+            
+            await sleep(500);
+            addLog('🗑️ Nettoyage des logs anciens...', 'info');
+            await sleep(1000);
+            addLog('✓ 2.8 GB supprimés (logs > 30 jours)', 'success');
+            
+            updateMetric('diskBar', 52);
+            issuesResolved++;
+            document.getElementById('resolved').textContent = issuesResolved;
+            
+            addLog('✅ Nettoyage terminé ! 26.5 GB libérés', 'success');
+        }
+        
+        // Vérifier les mises à jour
+        async function checkUpdates() {
+            addLog('🔄 Vérification des mises à jour...', 'info');
+            await sleep(1000);
+            
+            addLog('🔍 Connexion à Windows Update...', 'info');
+            await sleep(1200);
+            addLog('✓ Connexion établie', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Recherche des mises à jour Windows...', 'info');
+            await sleep(1500);
+            addLog('✓ Système à jour (dernière MAJ: 15/12/2024)', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Vérification des pilotes...', 'info');
+            await sleep(1200);
+            addLog('⚠ 3 pilotes obsolètes détectés:', 'warning');
+            addLog('  - NVIDIA GeForce RTX 3070 (v531.68 → v546.33)', 'system');
+            addLog('  - Intel Chipset (v10.1.18383.8213 → v10.1.19202.8321)', 'system');
+            addLog('  - Realtek Audio (v6.0.9049.1 → v6.0.9283.1)', 'system');
+            
+            await sleep(500);
+            addLog('💾 Téléchargement des mises à jour...', 'info');
+            await sleep(2500);
+            addLog('✓ 487 MB téléchargés', 'success');
+            
+            await sleep(500);
+            addLog('⚙️ Installation en cours...', 'info');
+            await sleep(2000);
+            addLog('✓ Pilotes mis à jour avec succès', 'success');
+            addLog('🔄 Redémarrage recommandé pour appliquer les changements', 'warning');
+            
+            issuesResolved++;
+            document.getElementById('resolved').textContent = issuesResolved;
+            
+            addLog('✅ Mises à jour terminées !', 'success');
+        }
+        
+        // Scan sécurité
+        async function securityScan() {
+            addLog('🛡️ Démarrage du scan de sécurité...', 'info');
+            await sleep(500);
+            
+            addLog('🔍 Analyse antivirus...', 'info');
+            await sleep(1500);
+            addLog('✓ Aucun virus détecté (237,428 fichiers analysés)', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Vérification du pare-feu...', 'info');
+            await sleep(800);
+            addLog('✓ Pare-feu Windows actif et à jour', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Analyse des ports ouverts...', 'info');
+            await sleep(1200);
+            addLog('✓ Ports système: 80, 443, 3389 (normaux)', 'success');
+            addLog('⚠ Port 8080 ouvert (Apache) - Vérifiez si nécessaire', 'warning');
+            
+            await sleep(500);
+            addLog('🔍 Vérification des certificats SSL...', 'info');
+            await sleep(1000);
+            addLog('✓ Tous les certificats sont valides', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Analyse des programmes suspects...', 'info');
+            await sleep(1500);
+            addLog('⚠ 2 applications non signées détectées:', 'warning');
+            addLog('  - C:\\Program Files\\AppXYZ\\tool.exe', 'system');
+            addLog('  - C:\\Users\\Admin\\Desktop\\script.bat', 'system');
+            
+            addLog('✅ Scan de sécurité terminé - Système sécurisé', 'success');
+        }
+        
+        // Test réseau
+        async function networkTest() {
+            addLog('📡 Démarrage du test réseau...', 'info');
+            await sleep(500);
+            
+            addLog('🔍 Test de connectivité Internet...', 'info');
+            await sleep(1000);
+            addLog('✓ Connexion Internet: Active', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Ping vers Google DNS (8.8.8.8)...', 'info');
+            await sleep(800);
+            addLog('✓ Latence: 12 ms (Excellent)', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Test de bande passante...', 'info');
+            await sleep(1500);
+            addLog('✓ Download: 287.5 Mbps', 'success');
+            addLog('✓ Upload: 42.3 Mbps', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Vérification DNS...', 'info');
+            await sleep(800);
+            addLog('✓ DNS primaire: 8.8.8.8 (Google)', 'success');
+            addLog('✓ DNS secondaire: 1.1.1.1 (Cloudflare)', 'success');
+            
+            await sleep(500);
+            addLog('🔍 Test de la passerelle...', 'info');
+            await sleep(700);
+            addLog('✓ Routeur: 192.168.1.1 - Temps de réponse: 2 ms', 'success');
+            
+            addLog('✅ Test réseau terminé - Connexion optimale', 'success');
+        }
+        
+        // Fonction sleep
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Simulation de l'uptime
+        let uptimeSeconds = 0;
+        setInterval(() => {
+            uptimeSeconds += 1;
+            const days = Math.floor(uptimeSeconds / 86400);
+            const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+            const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+            document.getElementById('uptime').textContent = `${days}d ${hours}h ${minutes}m`;
+        }, 1000);
+        
+        // Simulation de fluctuation des métriques
+        setInterval(() => {
+            const currentCpu = parseInt(document.getElementById('cpuBar').textContent);
+            const newCpu = Math.max(20, Math.min(80, currentCpu + (Math.random() - 0.5) * 10));
+            updateMetric('cpuBar', newCpu);
+        }, 3000);
+        
+        // Message de bienvenue
+        window.addEventListener('load', async () => {
+            await sleep(500);
+            addLog('═══════════════════════════════════════', 'system');
+            addLog('🤖 TIBOT v2.1.0 - Agent de Maintenance IA', 'success');
+            addLog('═══════════════════════════════════════', 'system');
+            addLog('✓ Système: Windows 11 Pro 64-bit', 'info');
+            addLog('✓ Processeur: Intel Core i7-11800H', 'info');
+            addLog('✓ RAM: 16 GB DDR4', 'info');
+            addLog('✓ GPU: NVIDIA GeForce RTX 3070', 'info');
+            addLog('═══════════════════════════════════════', 'system');
+            addLog('🔍 TIBOT est prêt à surveiller votre système', 'success');
+            addLog('💡 Cliquez sur "Diagnostic Complet" pour analyser votre PC', 'info');
+            addLog('═══════════════════════════════════════', 'system');
+            
+            // Initialiser les métriques avec des valeurs par défaut
+            await sleep(1000);
+            updateMetric('cpuBar', 45);
+            updateMetric('ramBar', 68);
+            updateMetric('diskBar', 78);
+            updateMetric('tempBar', 68, 100);
+        });
+    </script>
+</body>
+</html>
