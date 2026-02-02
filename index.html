@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIBOT MOBILE - Borne de Diagnostic Smartphone</title>
+    <meta name="description" content="Borne publique de diagnostic smartphone par connexion USB. Simulation interactive du kiosque TIBOT Mobile.">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            user-select: none;
+        }
+        
+        /* Simulation écran tactile 24 pouces */
+        .kiosk-container {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0a1628 0%, #1a1a2e 50%, #0f0f23 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Simulation cadre de la borne */
+        .kiosk-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 20px solid #1a1a1a;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* Header de la borne */
+        .kiosk-header {
+            background: linear-gradient(135deg, rgba(0, 200, 100, 0.3), rgba(0, 100, 200, 0.3));
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 3px solid rgba(0, 255, 150, 0.4);
+            box-shadow: 0 5px 30px rgba(0, 255, 150, 0.2);
+        }
+        
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ff96, #00cc77);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            animation: pulse 2s infinite;
+            text-shadow: 0 0 20px rgba(0, 255, 150, 0.5);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+        
+        .tagline {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        /* Zone de dépôt smartphone (visuel) */
+        .phone-dock {
+            position: fixed;
+            bottom: 100px;
+            right: 40px;
+            width: 200px;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.8));
+            border: 3px solid #00ff96;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 50px rgba(0, 255, 150, 0.3);
+            z-index: 999;
+            animation: glow 2s infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 10px 50px rgba(0, 255, 150, 0.3); }
+            50% { box-shadow: 0 10px 80px rgba(0, 255, 150, 0.5); }
+        }
+        
+        .phone-dock-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .phone-dock-text {
+            font-size: 1.2rem;
+            color: #00ff96;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .usb-ports {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .usb-port {
+            width: 40px;
+            height: 20px;
+            background: #000;
+            border: 2px solid #00ff96;
+            border-radius: 5px;
+            position: relative;
+        }
+        
+        .usb-port::after {
+            content: '⚡';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+        }
+        
+        /* Terminal paiement (visuel) */
+        .payment-terminal {
+            position: fixed;
+            bottom: 100px;
+            left: 40px;
+            width: 180px;
+            height: 250px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(40, 40, 60, 0.8));
+            border: 3px solid #ffaa00;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 50px rgba(255, 170, 0, 0.3);
+            z-index: 999;
+        }
+        
+        .payment-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .payment-text {
+            font-size: 1.1rem;
+            color: #ffaa00;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .card-slot {
+            width: 140px;
+            height: 8px;
+            background: #000;
+            border: 2px solid #ffaa00;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        /* Conteneur des écrans */
+        .screen-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding-top: 150px;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s, visibility 0.5s;
+            padding: 2rem;
+            padding-top: 180px;
+            padding-bottom: 120px;
+            overflow-y: auto;
+        }
+        
+        .screen.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 5;
+        }
+        
+        /* Écran 1 : Accueil */
+        .welcome-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .main-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            margin: 3rem 0;
+        }
+        
+        .kiosk-illustration {
+            font-size: 12rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .arrow {
+            font-size: 5rem;
+            color: #00ff96;
+            animation: slide 2s infinite;
+        }
+        
+        @keyframes slide {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(20px); }
+        }
+        
+        .phone-illustration {
+            font-size: 8rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .welcome-title {
+            font-size: 3rem;
+            margin: 2rem 0;
+            color: #00ff96;
+            font-weight: 700;
+        }
+        
+        .welcome-text {
+            font-size: 1.8rem;
+            margin: 1.5rem 0;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+        }
+        
+        .diagnostic-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin: 3rem 0;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .diagnostic-card {
+            background: rgba(10, 20, 30, 0.9);
+            border: 3px solid rgba(0, 255, 150, 0.3);
+            border-radius: 25px;
+            padding: 3rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .diagnostic-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 150, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .diagnostic-card:hover::before {
+            left: 200%;
+        }
+        
+        .diagnostic-card:hover {
+            border-color: #00ff96;
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 30px 80px rgba(0, 255, 150, 0.4);
+        }
+        
+        .card-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #00ff96;
+        }
+        
+        .card-price {
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 1rem 0;
+            color: #fff;
+        }
+        
+        .card-duration {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-features {
+            text-align: left;
+            margin: 1.5rem 0;
+        }
+        
+        .card-features li {
+            list-style: none;
+            padding: 0.6rem 0;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .card-features li::before {
+            content: '✓ ';
+            color: #00ff96;
+            font-weight: 700;
+            margin-right: 0.8rem;
+            font-size: 1.4rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff96, #00cc77);
+            border: none;
+            padding: 1.8rem 4rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #000;
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 10px 30px rgba(0, 255, 150, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(0, 255, 150, 0.5);
+        }
+        
+        .instructions-box {
+            background: rgba(0, 255, 150, 0.1);
+            border: 2px solid #00ff96;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 3rem 0;
+            text-align: left;
+        }
+        
+        .instructions-title {
+            font-size: 2rem;
+            color: #00ff96;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .instruction-step {
+            font-size: 1.4rem;
+            margin: 1rem 0;
+            padding-left: 3rem;
+            position: relative;
+        }
+        
+        .step-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 35px;
+            height: 35px;
+            background: #00ff96;
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        
+        /* Écran 2 : Instructions connexion détaillées */
+        .connection-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .cable-animation {
+            font-size: 8rem;
+            animation: swing 2s infinite;
+        }
+        
+        @keyframes swing {
+            0%, 100% { transform: rotate(-10deg); }
+            50% { transform: rotate(10deg); }
+        }
+        
+        .connection-arrow {
+            font-size: 6rem;
+            color: #00ff96;
+        }
+        
+        .port-visual {
+            width: 150px;
+            height: 200px;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f23);
+            border: 3px solid #00ff96;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            box-shadow: 0 10px 40px rgba(0, 255, 150, 0.3);
+        }
+        
+        .cable-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin: 3rem 0;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cable-option {
+            background: rgba(10, 20, 30, 0.8);
+            border: 3px solid rgba(0, 255, 150, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .cable-option:hover {
+            border-color: #00ff96;
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(0, 255, 150, 0.4);
+        }
+        
+        .cable-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .cable-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00ff96;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cable-desc {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .waiting-animation {
+            text-align: center;
+            margin: 3rem 0;
+        }
+        
+        .spinner-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .spinner {
+            width: 100px;
+            height: 100px;
+            border: 8px solid rgba(0, 255, 150, 0.2);
+            border-top-color: #00ff96;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .connection-status {
+            font-size: 2rem;
+            color: #00ff96;
+            margin: 2rem 0;
+            font-weight: 700;
+        }
+        
+        .detected-phone {
+            background: rgba(0, 255, 150, 0.1);
+            border: 2px solid #00ff96;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        /* Écran 3 : Paiement */
+        .payment-screen {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .payment-amount {
+            font-size: 8rem;
+            font-weight: 900;
+            color: #00ff96;
+            margin: 3rem 0;
+            text-shadow: 0 0 30px rgba(0, 255, 150, 0.5);
+        }
+        
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .payment-method {
+            background: rgba(10, 20, 30, 0.8);
+            border: 3px solid rgba(255, 170, 0, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .payment-method:hover {
+            border-color: #ffaa00;
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(255, 170, 0, 0.4);
+        }
+        
+        .payment-method-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .payment-method-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffaa00;
+        }
+        
+        .payment-instruction {
+            background: rgba(255, 170, 0, 0.2);
+            border: 2px solid #ffaa00;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-size: 1.8rem;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Écran 4 : Diagnostic en cours */
+        .diagnostic-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .device-model {
+            font-size: 2.5rem;
+            color: #00ff96;
+            margin-bottom: 1rem;
+        }
+        
+        .device-image {
+            font-size: 8rem;
+            margin: 2rem 0;
+        }
+        
+        .progress-container {
+            background: rgba(0, 0, 0, 0.6);
+            height: 80px;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            margin: 2rem 0;
+            border: 3px solid rgba(0, 255, 150, 0.3);
+            box-shadow: inset 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff96, #00cc77);
+            width: 0%;
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 900;
+            color: #000;
+            position: relative;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+        
+        .current-test {
+            font-size: 2.2rem;
+            text-align: center;
+            margin: 2rem 0;
+            color: #00ff96;
+            font-weight: 700;
+            min-height: 3em;
+        }
+        
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .test-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1.2rem 1.5rem;
+            border-radius: 15px;
+            border-left: 5px solid rgba(0, 255, 150, 0.3);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            opacity: 0.4;
+            transition: all 0.3s;
+        }
+        
+        .test-item.completed {
+            opacity: 1;
+            border-left-color: #00ff96;
+            background: rgba(0, 255, 150, 0.05);
+        }
+        
+        .test-item.running {
+            opacity: 1;
+            background: rgba(0, 255, 150, 0.15);
+            border-left-color: #00ff96;
+            animation: pulse-test 1s infinite;
+        }
+        
+        @keyframes pulse-test {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .test-icon {
+            font-size: 1.8rem;
+        }
+        
+        /* Écran 5 : Résultats */
+        .results-header {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .score-circle {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #00ff96 0deg,
+                #00ff96 var(--score-deg),
+                rgba(0, 255, 150, 0.2) var(--score-deg)
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto;
+            box-shadow: 0 20px 60px rgba(0, 255, 150, 0.3);
+        }
+        
+        .score-inner {
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: rgba(10, 20, 30, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .score-value {
+            font-size: 6rem;
+            font-weight: 900;
+            color: #00ff96;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(0, 255, 150, 0.5);
+        }
+        
+        .score-max {
+            font-size: 2.5rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .score-label {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .result-box {
+            background: rgba(10, 20, 30, 0.9);
+            border: 3px solid rgba(0, 255, 150, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        
+        .result-title {
+            font-size: 2rem;
+            color: #00ff96;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .result-list {
+            list-style: none;
+        }
+        
+        .result-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1.3rem;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .issue-item {
+            background: rgba(255, 170, 0, 0.15);
+            border-left: 5px solid #ffaa00;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+        }
+        
+        .issue-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffaa00;
+        }
+        
+        .issue-desc {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0.5rem;
+        }
+        
+        .issue-solution {
+            font-size: 1.2rem;
+            color: #00ff96;
+        }
+        
+        .value-estimate {
+            text-align: center;
+            background: rgba(0, 255, 150, 0.15);
+            border: 3px solid #00ff96;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .value-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .value-range {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #00ff96;
+            margin: 1rem 0;
+            text-shadow: 0 0 20px rgba(0, 255, 150, 0.5);
+        }
+        
+        .workshop-box {
+            background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(255, 100, 0, 0.2));
+            border: 3px solid #ffaa00;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .workshop-title {
+            font-size: 2.5rem;
+            color: #ffaa00;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .workshop-info {
+            font-size: 1.4rem;
+            line-height: 2;
+            margin: 0.5rem 0;
+        }
+        
+        .workshop-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            border: none;
+            padding: 1.5rem 2rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #000;
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+        }
+        
+        .btn-secondary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 50px rgba(255, 170, 0, 0.5);
+        }
+        
+        .printing-status {
+            text-align: center;
+            background: rgba(0, 255, 150, 0.1);
+            border: 2px solid #00ff96;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .printing-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .printing-text {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        /* Footer permanent */
+        .kiosk-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 20, 30, 0.98);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 3px solid rgba(0, 255, 150, 0.3);
+            z-index: 100;
+            box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.5);
+        }
+        
+        .footer-info {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .footer-actions {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .btn-footer {
+            background: rgba(0, 255, 150, 0.2);
+            border: 2px solid #00ff96;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        
+        .btn-footer:hover {
+            background: #00ff96;
+            color: #000;
+            transform: scale(1.05);
+        }
+        
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideInUp 0.8s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="kiosk-container">
+        <!-- Cadre de la borne -->
+        <div class="kiosk-frame"></div>
+        
+        <!-- Header permanent -->
+        <div class="kiosk-header">
+            <div class="logo">🤖 TIBOT MOBILE</div>
+            <div class="tagline">Borne de Diagnostic Smartphone par USB</div>
+        </div>
+        
+        <!-- Zone de dépôt smartphone (visuel fixe) -->
+        <div class="phone-dock">
+            <div class="phone-dock-icon">📱</div>
+            <div class="phone-dock-text">DÉPOSEZ VOTRE<br>SMARTPHONE ICI</div>
+            <div class="usb-ports">
+                <div class="usb-port" title="USB-C"></div>
+                <div class="usb-port" title="Lightning"></div>
+                <div class="usb-port" title="Micro-USB"></div>
+            </div>
+        </div>
+        
+        <!-- Terminal de paiement (visuel fixe) -->
+        <div class="payment-terminal">
+            <div class="payment-icon">💳</div>
+            <div class="payment-text">PAIEMENT<br>SANS CONTACT</div>
+            <div class="card-slot"></div>
+        </div>
+        
+        <!-- Conteneur des écrans -->
+        <div class="screen-container">
+            <!-- ÉCRAN 1 : ACCUEIL -->
+            <div class="screen active" id="screen-welcome">
+                <div class="welcome-content slide-in">
+                    <div class="main-visual">
+                        <div class="kiosk-illustration">🖥️</div>
+                        <div class="arrow">→</div>
+                        <div class="phone-illustration">📱</div>
+                    </div>
+                    
+                    <div class="welcome-title">Diagnostiquez votre smartphone en 5 minutes</div>
+                    <div class="welcome-text">
+                        Branchez votre téléphone via USB et découvrez son état de santé complet
+                    </div>
+                    
+                    <div class="diagnostic-options">
+                        <div class="diagnostic-card" onclick="startFreeDiagnostic()">
+                            <div class="card-icon">🆓</div>
+                            <div class="card-title">SCAN RAPIDE</div>
+                            <div class="card-price">GRATUIT</div>
+                            <div class="card-duration">⏱️ 2 minutes</div>
+                            <ul class="card-features">
+                                <li>Modèle et référence</li>
+                                <li>État batterie</li>
+                                <li>Espace disponible</li>
+                                <li>Score santé /100</li>
+                            </ul>
+                            <button class="btn-primary">COMMENCER</button>
+                        </div>
+                        
+                        <div class="diagnostic-card" onclick="startPaidDiagnostic()">
+                            <div class="card-icon">💎</div>
+                            <div class="card-title">DIAGNOSTIC COMPLET</div>
+                            <div class="card-price">3€</div>
+                            <div class="card-duration">⏱️ 5 minutes</div>
+                            <ul class="card-features">
+                                <li>30+ tests automatiques</li>
+                                <li>Certificat imprimé</li>
+                                <li>Valeur de reprise estimée</li>
+                                <li>Rapport PDF par email</li>
+                                <li>Détection pannes cachées</li>
+                            </ul>
+                            <button class="btn-primary">ACHETER 3€</button>
+                        </div>
+                    </div>
+                    
+                    <div class="instructions-box">
+                        <div class="instructions-title">💡 Comment ça marche ?</div>
+                        <div class="instruction-step">
+                            <div class="step-number">1</div>
+                            Choisissez votre type de diagnostic (gratuit ou complet)
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">2</div>
+                            Branchez votre smartphone dans le port USB (câbles fournis) →
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">3</div>
+                            Payez par carte bancaire sans contact (si diagnostic complet) ←
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">4</div>
+                            Patientez pendant l'analyse automatique (2-5 minutes)
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">5</div>
+                            Récupérez votre ticket imprimé + rapport PDF par email
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ÉCRAN 2 : CONNEXION USB -->
+            <div class="screen" id="screen-connection">
+                <div class="slide-in">
+                    <h1 style="text-align: center; font-size: 3rem; color: #00ff96; margin-bottom: 2rem;">
+                        📱 CONNEXION USB DU SMARTPHONE
+                    </h1>
+                    
+                    <div class="connection-visual">
+                        <div class="cable-animation">🔌</div>
+                        <div class="connection-arrow">→</div>
+                        <div class="port-visual">⚡</div>
+                    </div>
+                    
+                    <h2 style="text-align: center; font-size: 2.5rem; margin: 3rem 0;">
+                        Sélectionnez le câble adapté à votre smartphone
+                    </h2>
+                    
+                    <div class="cable-selector">
+                        <div class="cable-option" onclick="selectCable('usbc')">
+                            <div class="cable-icon">🔌</div>
+                            <div class="cable-name">USB-C</div>
+                            <div class="cable-desc">
+                                Android récent<br>
+                                Samsung, Google Pixel,<br>
+                                OnePlus, Xiaomi...
+                            </div>
+                        </div>
+                        
+                        <div class="cable-option" onclick="selectCable('lightning')">
+                            <div class="cable-icon">⚡</div>
+                            <div class="cable-name">Lightning</div>
+                            <div class="cable-desc">
+                                Apple iPhone<br>
+                                iPhone 8 à 14<br>
+                                (avant iPhone 15)
+                            </div>
+                        </div>
+                        
+                        <div class="cable-option" onclick="selectCable('microusb')">
+                            <div class="cable-icon">🔌</div>
+                            <div class="cable-name">Micro-USB</div>
+                            <div class="cable-desc">
+                                Android ancien<br>
+                                Smartphones avant 2018<br>
+                                Modèles bas de gamme
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="instructions-box" style="margin-top: 3rem;">
+                        <div class="instructions-title">📝 Instructions importantes</div>
+                        <div class="instruction-step">
+                            <div class="step-number">1</div>
+                            Prenez le câble correspondant à votre smartphone (voir zone de droite →)
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">2</div>
+                            Branchez votre smartphone dans le port USB indiqué
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">3</div>
+                            <strong>Déverrouillez l'écran</strong> de votre smartphone
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">4</div>
+                            <strong>Autorisez la connexion USB</strong> sur la popup qui apparaît
+                        </div>
+                        <div class="instruction-step">
+                            <div class="step-number">5</div>
+                            Déposez votre smartphone sur la zone prévue (à droite →)
+                        </div>
+                    </div>
+                    
+                    <div class="waiting-animation">
+                        <div class="spinner-container">
+                            <div class="spinner"></div>
+                        </div>
+                        <div class="connection-status" id="connection-status">
+                            ⏳ En attente de la connexion USB...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ÉCRAN 3 : PAIEMENT -->
+            <div class="screen" id="screen-payment">
+                <div class="payment-screen slide-in">
+                    <h1 style="font-size: 3.5rem; color: #ffaa00; margin-bottom: 2rem;">
+                        💳 PAIEMENT SÉCURISÉ
+                    </h1>
+                    
+                    <div class="payment-amount">3€</div>
+                    
+                    <h2 style="font-size: 2rem; margin: 2rem 0;">
+                        Choisissez votre mode de paiement
+                    </h2>
+                    
+                    <div class="payment-methods">
+                        <div class="payment-method" onclick="processPayment('contactless')">
+                            <div class="payment-method-icon">📶</div>
+                            <div class="payment-method-name">SANS CONTACT</div>
+                        </div>
+                        
+                        <div class="payment-method" onclick="processPayment('chip')">
+                            <div class="payment-method-icon">💳</div>
+                            <div class="payment-method-name">CARTE À PUCE</div>
+                        </div>
+                        
+                        <div class="payment-method" onclick="processPayment('mobile')">
+                            <div class="payment-method-icon">📱</div>
+                            <div class="payment-method-name">APPLE / GOOGLE PAY</div>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-instruction" id="payment-instruction">
+                        👈 Approchez votre carte du lecteur de paiement (à gauche)
+                    </div>
+                    
+                    <div class="instructions-box" style="margin-top: 3rem;">
+                        <div class="instructions-title">🔒 Paiement 100% sécurisé</div>
+                        <div style="font-size: 1.3rem; text-align: center; line-height: 2;">
+                            ✓ Norme PCI-DSS (sécurité bancaire internationale)<br>
+                            ✓ Aucune donnée bancaire conservée<br>
+                            ✓ Connexion chiffrée SSL<br>
+                            ✓ Terminal certifié CB
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ÉCRAN 4 : DIAGNOSTIC EN COURS -->
+            <div class="screen" id="screen-diagnostic">
+                <div class="slide-in">
+                    <div class="diagnostic-header">
+                        <div class="device-model" id="device-model">📱 Détection du smartphone...</div>
+                        <div class="device-image">📱</div>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress-bar">0%</div>
+                    </div>
+                    
+                    <div class="current-test" id="current-test">
+                        🔍 Initialisation de la connexion USB...
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 1.6rem; color: rgba(255, 255, 255, 0.6); margin: 2rem 0;">
+                        ⏱️ Temps restant : <span id="time-remaining">5 minutes</span>
+                    </div>
+                    
+                    <div class="tests-grid" id="tests-grid">
+                        <!-- Tests ajoutés dynamiquement -->
+                    </div>
+                    
+                    <div class="instructions-box" style="margin-top: 2rem;">
+                        <div style="text-align: center; font-size: 2rem; color: #00ff96;">
+                            ⚠️ NE DÉBRANCHEZ PAS VOTRE SMARTPHONE
+                        </div>
+                        <div style="text-align: center; font-size: 1.4rem; margin-top: 1rem; color: rgba(255, 255, 255, 0.8);">
+                            L'analyse est en cours. Le débranchement pourrait corrompre les résultats.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ÉCRAN 5 : RÉSULTATS -->
+            <div class="screen" id="screen-results">
+                <div class="slide-in">
+                    <div class="results-header">
+                        <div class="score-circle" style="--score-deg: 313deg;">
+                            <div class="score-inner">
+                                <div class="score-value">87</div>
+                                <div class="score-max">/100</div>
+                            </div>
+                        </div>
+                        <div class="score-label">TRÈS BON ÉTAT ✅</div>
+                        <div style="font-size: 1.5rem; color: rgba(255, 255, 255, 0.6); margin-top: 1rem;">
+                            État Cosmétique : B+ (Très bon)
+                        </div>
+                    </div>
+                    
+                    <div class="results-grid">
+                        <div class="result-box">
+                            <div class="result-title">✅ TESTS RÉUSSIS (28/30)</div>
+                            <ul class="result-list">
+                                <li class="result-item">✓ Écran tactile : 100% fonctionnel</li>
+                                <li class="result-item">✓ Batterie : 91% capacité (347 cycles)</li>
+                                <li class="result-item">✓ Caméras avant/arrière : Parfait état</li>
+                                <li class="result-item">✓ Face ID : Fonctionnel</li>
+                                <li class="result-item">✓ Audio (HP + micro) : OK</li>
+                                <li class="result-item">✓ WiFi/Bluetooth/4G : OK</li>
+                                <li class="result-item">✓ iCloud : Déverrouillé ✅</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="result-box">
+                            <div class="result-title">⚠️ POINTS D'ATTENTION (2)</div>
+                            <div class="issue-item">
+                                <div class="issue-title">1. Capteur proximité ralenti</div>
+                                <div class="issue-desc">→ Écran reste allumé pendant les appels</div>
+                                <div class="issue-solution">💰 Réparation : 45€ (pièce + main d'œuvre)</div>
+                            </div>
+                            <div class="issue-item">
+                                <div class="issue-title">2. Port Lightning encrassé</div>
+                                <div class="issue-desc">→ Charge parfois lente ou instable</div>
+                                <div class="issue-solution">🆓 Nettoyage GRATUIT en atelier</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="value-estimate">
+                        <div class="value-title">💰 VALEUR ESTIMÉE SUR LE MARCHÉ</div>
+                        <div class="value-range">520€ - 580€</div>
+                        <div style="font-size: 1.4rem; color: rgba(255, 255, 255, 0.9); margin-top: 1rem;">
+                            Reprise immédiate Jonas Browser : <strong style="color: #00ff96;">480€</strong>
+                        </div>
+                        <div style="font-size: 1.3rem; color: rgba(255, 255, 255, 0.7); margin-top: 1.5rem;">
+                            💡 Avec réparations (+45€) :<br>
+                            Valeur augmentée à : <strong style="color: #00ff96;">600€ - 650€</strong> (+10%)
+                        </div>
+                    </div>
+                    
+                    <div class="workshop-box">
+                        <div class="workshop-title">🔧 ATELIER JONAS BROWSER</div>
+                        <div class="workshop-info">📍 108 boulevard Robert Schuman<br>44300 Nantes, France</div>
+                        <div class="workshop-info">📞 Téléphone : 06 52 57 37 79</div>
+                        <div class="workshop-info">📧 Email : mobile@jonas-browser.com</div>
+                        <div class="workshop-info">🕐 Horaires : Lun-Ven 9h-18h | Samedi 10h-17h</div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.5); padding: 2rem; border-radius: 15px; margin: 2rem 0;">
+                            <div style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem; text-align: center;">💡 OFFRE SPÉCIALE</div>
+                            <div style="font-size: 1.5rem; text-align: center; line-height: 1.8;">
+                                <strong>-10% sur toutes les réparations</strong><br>
+                                avec ce ticket de diagnostic<br>
+                                (valable 30 jours)
+                            </div>
+                        </div>
+                        
+                        <div class="workshop-actions">
+                            <button class="btn-secondary" onclick="alert('📞 Appel vers 06 52 57 37 79...')">📞 APPELER</button>
+                            <button class="btn-secondary" onclick="alert('📅 Ouverture formulaire prise de RDV...')">📅 PRENDRE RDV</button>
+                        </div>
+                    </div>
+                    
+                    <div class="printing-status">
+                        <div class="printing-icon">🖨️</div>
+                        <div class="printing-text">Impression de votre ticket en cours...</div>
+                        <div style="font-size: 1.5rem; color: rgba(255, 255, 255, 0.7); margin-top: 1rem;">
+                            📧 Rapport PDF envoyé à : client@email.com
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer permanent -->
+        <div class="kiosk-footer">
+            <div class="footer-info">
+                📍 Borne TIBOT Mobile - Jonas Browser High-Tech, Nantes
+            </div>
+            <div class="footer-actions">
+                <button class="btn-footer" onclick="goHome()">🏠 NOUVEAU TEST</button>
+                <button class="btn-footer" onclick="alert('❓ Aide : Besoin d\'assistance ? Appuyez sur le bouton SUPPORT')">❓ AIDE</button>
+                <button class="btn-footer" onclick="alert('📞 Support technique :\n06 52 57 37 79\n\nUn technicien peut intervenir à distance ou se déplacer.')">📞 SUPPORT</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Variables globales
+        let currentScreen = 'screen-welcome';
+        let diagnosticType = 'free';
+        let progress = 0;
+        let testIndex = 0;
+        
+        // Tests complets (30 tests)
+        const tests = [
+            { name: 'Modèle et Référence', icon: '📱', duration: 1000 },
+            { name: 'Système d\'exploitation', icon: '⚙️', duration: 800 },
+            { name: 'Processeur', icon: '🔢', duration: 1200 },
+            { name: 'Mémoire RAM', icon: '🧠', duration: 1000 },
+            { name: 'Stockage interne', icon: '💾', duration: 1500 },
+            { name: 'Batterie (capacité)', icon: '🔋', duration: 2000 },
+            { name: 'Batterie (cycles)', icon: '🔄', duration: 1000 },
+            { name: 'Écran (dead pixels)', icon: '📺', duration: 2500 },
+            { name: 'Multi-touch', icon: '👆', duration: 2000 },
+            { name: 'Luminosité', icon: '💡', duration: 1200 },
+            { name: 'Caméra arrière', icon: '📷', duration: 1800 },
+            { name: 'Caméra avant', icon: '🤳', duration: 2000 },
+            { name: 'Flash LED', icon: '⚡', duration: 800 },
+            { name: 'Autofocus', icon: '🎯', duration: 1500 },
+            { name: 'Haut-parleurs', icon: '🔊', duration: 1200 },
+            { name: 'Microphone', icon: '🎤', duration: 1200 },
+            { name: 'Vibreur', icon: '📳', duration: 800 },
+            { name: 'WiFi', icon: '📡', duration: 1500 },
+            { name: 'Bluetooth', icon: '🔵', duration: 1000 },
+            { name: '4G/5G', icon: '📶', duration: 1200 },
+            { name: 'GPS', icon: '🗺️', duration: 1500 },
+            { name: 'NFC', icon: '💳', duration: 800 },
+            { name: 'Gyroscope', icon: '🌀', duration: 1500 },
+            { name: 'Accéléromètre', icon: '📐', duration: 1200 },
+            { name: 'Capteur proximité', icon: '👋', duration: 1800 },
+            { name: 'Capteur luminosité', icon: '☀️', duration: 1000 },
+            { name: 'Boussole', icon: '🧭', duration: 1200 },
+            { name: 'Port USB/Lightning', icon: '🔌', duration: 1000 },
+            { name: 'Boutons physiques', icon: '🎚️', duration: 1200 },
+            { name: 'iCloud Lock', icon: '🔐', duration: 1500 }
+        ];
+        
+        // Changer d'écran
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+        }
+        
+        // Diagnostic gratuit
+        function startFreeDiagnostic() {
+            diagnosticType = 'free';
+            showScreen('screen-connection');
+            setTimeout(() => {
+                simulateUSBConnection();
+            }, 3000);
+        }
+        
+        // Diagnostic payant
+        function startPaidDiagnostic() {
+            diagnosticType = 'paid';
+            showScreen('screen-payment');
+        }
+        
+        // Sélection câble
+        function selectCable(type) {
+            const cableNames = {
+                'usbc': 'USB-C',
+                'lightning': 'Lightning',
+                'microusb': 'Micro-USB'
+            };
+            document.getElementById('connection-status').innerHTML = 
+                `✅ Câble ${cableNames[type]} sélectionné !<br>Connexion en cours...`;
+        }
+        
+        // Simuler connexion USB
+        function simulateUSBConnection() {
+            setTimeout(() => {
+                document.getElementById('connection-status').innerHTML = 
+                    '🔌 Connexion USB détectée !';
+                setTimeout(() => {
+                    document.getElementById('connection-status').innerHTML = 
+                        '✅ Smartphone connecté : iPhone 13 Pro 128GB';
+                    setTimeout(() => {
+                        if (diagnosticType === 'paid') {
+                            showScreen('screen-payment');
+                        } else {
+                            startDiagnostic();
+                        }
+                    }, 2000);
+                }, 1500);
+            }, 2000);
+        }
+        
+        // Traiter paiement
+        function processPayment(method) {
+            const methodNames = {
+                'contactless': 'Sans Contact',
+                'chip': 'Carte à Puce',
+                'mobile': 'Apple/Google Pay'
+            };
+            document.getElementById('payment-instruction').innerHTML = 
+                `⏳ Paiement ${methodNames[method]} en cours...`;
+            
+            setTimeout(() => {
+                document.getElementById('payment-instruction').innerHTML = 
+                    `✅ Paiement de 3€ accepté !<br>Démarrage du diagnostic...`;
+                setTimeout(() => {
+                    startDiagnostic();
+                }, 2000);
+            }, 2000);
+        }
+        
+        // Démarrer diagnostic
+        function startDiagnostic() {
+            showScreen('screen-diagnostic');
+            document.getElementById('device-model').innerHTML = '📱 iPhone 13 Pro 128GB';
+            
+            const testsGrid = document.getElementById('tests-grid');
+            testsGrid.innerHTML = '';
+            
+            tests.forEach((test, index) => {
+                const testItem = document.createElement('div');
+                testItem.className = 'test-item';
+                testItem.id = `test-${index}`;
+                testItem.innerHTML = `
+                    <span class="test-icon">${test.icon}</span>
+                    <span>${test.name}</span>
+                `;
+                testsGrid.appendChild(testItem);
+            });
+            
+            runTests();
+        }
+        
+        // Exécuter tests
+        function runTests() {
+            if (testIndex >= tests.length) {
+                setTimeout(() => {
+                    showResults();
+                }, 1000);
+                return;
+            }
+            
+            const currentTest = tests[testIndex];
+            
+            document.getElementById(`test-${testIndex}`).classList.add('running');
+            document.getElementById('current-test').innerHTML = 
+                `🔍 Test en cours : ${currentTest.name}`;
+            
+            progress = Math.round(((testIndex + 1) / tests.length) * 100);
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+            
+            const remainingTests = tests.length - testIndex - 1;
+            const avgDuration = 1200;
+            const remainingTime = Math.ceil((remainingTests * avgDuration) / 1000);
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            document.getElementById('time-remaining').textContent = 
+                minutes > 0 ? `${minutes} min ${seconds} s` : `${seconds} secondes`;
+            
+            setTimeout(() => {
+                document.getElementById(`test-${testIndex}`).classList.remove('running');
+                document.getElementById(`test-${testIndex}`).classList.add('completed');
+                
+                testIndex++;
+                runTests();
+            }, currentTest.duration);
+        }
+        
+        // Afficher résultats
+        function showResults() {
+            showScreen('screen-results');
+            
+            const scoreCircle = document.querySelector('.score-circle');
+            let currentDeg = 0;
+            const targetDeg = 313;
+            
+            const animateScore = setInterval(() => {
+                currentDeg += 5;
+                if (currentDeg >= targetDeg) {
+                    currentDeg = targetDeg;
+                    clearInterval(animateScore);
+                }
+                scoreCircle.style.setProperty('--score-deg', currentDeg + 'deg');
+            }, 20);
+        }
+        
+        // Retour accueil
+        function goHome() {
+            progress = 0;
+            testIndex = 0;
+            showScreen('screen-welcome');
+        }
+        
+        // Chargement
+        window.addEventListener('load', () => {
+            console.log('🤖 TIBOT MOBILE - Borne physique simulée');
+        });
+    </script>
+</body>
+</html>
